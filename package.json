@@ -1,0 +1,14 @@
+{
+  "name": "deepseek-bridge",
+  "version": "1.0.0",
+  "description": "Local OpenAI-compatible API wrapping DeepSeek web UI",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "dependencies": {
+    "electron": "^43.2.0",
+    "express": "^4.21.0"
+  }
+}
