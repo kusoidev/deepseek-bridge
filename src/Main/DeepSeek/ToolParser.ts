@@ -92,6 +92,11 @@ export function IsToolName(name: string, allowedSet: Set<string> | null): boolea
  * Only tool names that pass IsToolName are included; unmatched tags are
  * left in the cleaned content (they're assumed to be markdown or code).
  *
+ * The `<tool_call>` tag supports three JSON shapes DeepSeek may emit:
+ * - `{"type": "bash", "command": "..."}`  (type field)
+ * - `{"name": "bash", "command": "..."}`  (name field)
+ * - `{"type": "bash", "arguments": {"command": "..."}}`  (nested arguments)
+ *
  * @param text - The full accumulated response text from the model.
  * @param allowedSet - Request-level allowed tool names, or null.
  * @returns Object with the parsed tool calls and the cleaned text.
@@ -119,12 +124,18 @@ export function ParseToolCalls(text: string, allowedSet: Set<string> | null): Pa
 
     if (tagName === 'tool_call') {
       const parsed = JSON.parse(innerText);
-      fnName = (parsed.type || '').toLowerCase();
+      fnName = (parsed.type || parsed.name || '').toLowerCase();
       if (!fnName || !IsToolName(fnName, allowedSet)) continue;
       callId = parsed.id || `call_${Date.now()}_${id}`;
-      fnArgs = parsed;
-      delete fnArgs.type;
-      delete fnArgs.id;
+      if (parsed.arguments && typeof parsed.arguments === 'object' && !Array.isArray(parsed.arguments)) {
+        fnArgs = { ...parsed.arguments };
+      } else {
+        fnArgs = { ...parsed };
+        delete fnArgs.type;
+        delete fnArgs.name;
+        delete fnArgs.id;
+        delete fnArgs.arguments;
+      }
     } else {
       if (!IsToolName(tagName, allowedSet)) continue;
       fnName = tagName;
