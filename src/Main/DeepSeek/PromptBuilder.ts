@@ -49,7 +49,8 @@ function ContentOf(msg: OpenAiMessage): string {
  *   by the user question. The web thread is empty so we need the full context.
  *
  * - **last = user, ongoing**: The web thread already holds the conversation
- *   history. Only type the new user question.
+ *   history. Type the current system prompts (which may have been updated
+ *   by agentic IDEs like Cursor or Cline) followed by the new user question.
  *
  * - **fallback**: The last message is something unexpected (e.g., assistant
  *   with no trailing tool result). Scan backward for the most recent user
@@ -108,19 +109,18 @@ export function BuildDeepSeekPrompt(messages: OpenAiMessage[]): BuiltPrompt {
 
   if (lastRole === 'user') {
     const userText = ContentOf(last);
-    if (!hasAssistant && !hasTool) {
-      const head: string[] = [];
-      for (const msg of messages) {
-        if (msg.role !== 'system') continue;
-        const sys = ContentOf(msg);
-        if (sys && !(sys.includes('title generator') && sys.includes('Generate a title'))) {
-          head.push(sys);
-        }
+    const head: string[] = [];
+    for (const msg of messages) {
+      if (msg.role !== 'system') continue;
+      const sys = ContentOf(msg);
+      if (sys && !(sys.includes('title generator') && sys.includes('Generate a title'))) {
+        head.push(sys);
       }
-      head.push(userText);
-      return { text: head.filter(p => p).join('\n\n'), kind: 'fresh' };
     }
-    return { text: userText, kind: 'turn' };
+    head.push(userText);
+    const text = head.filter(p => p).join('\n\n');
+    if (!hasAssistant && !hasTool) return { text, kind: 'fresh' };
+    return { text, kind: 'turn' };
   }
 
   for (let j = lastIdx; j >= 0; j--) {
