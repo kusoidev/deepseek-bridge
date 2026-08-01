@@ -2,13 +2,20 @@
   "name": "deepseek-bridge",
   "version": "1.0.0",
   "description": "Local OpenAI-compatible API wrapping DeepSeek web UI",
-  "main": "main.js",
+  "main": "dist/Main/App/Main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev"
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev",
+    "certs": "node dist/Scripts/GenCerts.js"
   },
   "dependencies": {
     "electron": "^43.2.0",
     "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
   }
 }
